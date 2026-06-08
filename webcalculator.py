@@ -24,7 +24,7 @@ def btn_click(value):
         st.session_state.expression = ""
         st.session_state.display    = "0"
 
-    elif value == "⌫":
+    elif value == "DEL":
         expr = expr[:-1]
         st.session_state.expression = expr
         st.session_state.display    = expr if expr else "0"
@@ -44,7 +44,7 @@ def btn_click(value):
             st.session_state.display    = "Error"
             st.session_state.expression = ""
 
-    elif value == "%":
+    elif value == "PCT":
         try:
             result = eval(expr) / 100
             if isinstance(result, float) and result.is_integer():
@@ -55,7 +55,7 @@ def btn_click(value):
             st.session_state.display    = "Error"
             st.session_state.expression = ""
 
-    elif value == "1/x":
+    elif value == "INV":
         try:
             result = 1 / eval(expr)
             st.session_state.display    = str(round(result, 10))
@@ -64,7 +64,7 @@ def btn_click(value):
             st.session_state.display    = "Can't ÷ by 0"
             st.session_state.expression = ""
 
-    elif value == "x²":
+    elif value == "SQ":
         try:
             result = eval(expr) ** 2
             st.session_state.display    = str(result)
@@ -72,7 +72,7 @@ def btn_click(value):
         except:
             st.session_state.display = "Error"
 
-    elif value == "√x":
+    elif value == "SQRT":
         try:
             num = eval(expr)
             if num < 0:
@@ -87,7 +87,7 @@ def btn_click(value):
         except:
             st.session_state.display = "Error"
 
-    elif value == "+/-":
+    elif value == "NEG":
         try:
             result = eval(expr) * -1
             if isinstance(result, float) and result.is_integer():
@@ -114,147 +114,152 @@ def btn_click(value):
         st.session_state.display    = new
 
 
-# ── Full UI using HTML Component ───────────────────────────
-import streamlit.components.v1 as components
+# ── Styling ────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* Hide Streamlit chrome */
+#MainMenu, footer, header {visibility: hidden;}
+.block-container {
+    max-width: 400px !important;
+    padding-top: 1rem !important;
+}
+.stApp { background-color: #1c1c1e; }
 
-result = components.html(
-    f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+/* Display box */
+.calc-display {
+    background: #2c2c2e;
+    border-radius: 16px;
+    padding: 20px 18px 14px;
+    text-align: right;
+    margin-bottom: 12px;
+    min-height: 100px;
+}
+.calc-history {
+    color: #888;
+    font-size: 14px;
+    min-height: 20px;
+    margin-bottom: 4px;
+}
+.calc-result {
+    color: #fff;
+    font-size: 48px;
+    font-weight: 700;
+    word-break: break-all;
+}
 
-        body {{
-            background: #1c1c1e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+/* Universal button reset */
+[data-testid="stButton"] button {
+    width: 100% !important;
+    height: 68px !important;
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    border-radius: 14px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: filter 0.15s !important;
+}
+[data-testid="stButton"] button:hover {
+    filter: brightness(1.3) !important;
+}
+
+/* Normal number buttons */
+[data-testid="stButton"] button[kind="secondary"] {
+    background-color: #3a3a3c !important;
+    color: #ffffff !important;
+}
+
+/* Row gap */
+[data-testid="column"] { padding: 2px 3px !important; }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ── Display ────────────────────────────────────────────────
+st.markdown(f"""
+<div class="calc-display">
+    <div class="calc-history">{st.session_state.history}&nbsp;</div>
+    <div class="calc-result">{st.session_state.display}</div>
+</div>
+""", unsafe_allow_html=True)
+
+
+# ── Button Renderer ────────────────────────────────────────
+def btn(col, label, val, color="#3a3a3c"):
+    with col:
+        st.markdown(f"""
+        <style>
+        div[data-testid="stButton"]:has(button[title="{val}")) button {{
+            background-color: {color} !important;
+            color: #fff !important;
         }}
+        </style>
+        """, unsafe_allow_html=True)
+        if st.button(label, key=f"k_{val}_{label}", help=val):
+            btn_click(val)
 
-        .calculator {{
-            background: #1c1c1e;
-            border-radius: 24px;
-            padding: 20px;
-            width: 360px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        }}
 
-        .display {{
-            background: #2c2c2e;
-            border-radius: 16px;
-            padding: 20px 18px 14px;
-            text-align: right;
-            margin-bottom: 16px;
-            min-height: 110px;
-        }}
+# ── Row 1 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**%**",   key="pct",  use_container_width=True): btn_click("PCT")
+with c[1]:
+    if st.button("**CE**",  key="ce",   use_container_width=True): btn_click("CE")
+with c[2]:
+    if st.button("**C**",   key="cl",   use_container_width=True): btn_click("C")
+with c[3]:
+    if st.button("**⌫**",   key="back", use_container_width=True): btn_click("DEL")
 
-        .history {{
-            color: #888;
-            font-size: 14px;
-            min-height: 20px;
-            margin-bottom: 6px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }}
+# ── Row 2 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**1/x**", key="inv",  use_container_width=True): btn_click("INV")
+with c[1]:
+    if st.button("**x²**",  key="sq",   use_container_width=True): btn_click("SQ")
+with c[2]:
+    if st.button("**√x**",  key="sqrt", use_container_width=True): btn_click("SQRT")
+with c[3]:
+    if st.button("**÷**",   key="div",  use_container_width=True): btn_click("/")
 
-        .result {{
-            color: #fff;
-            font-size: 50px;
-            font-weight: 700;
-            word-break: break-all;
-            line-height: 1.1;
-        }}
+# ── Row 3 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**7**",   key="n7",   use_container_width=True): btn_click("7")
+with c[1]:
+    if st.button("**8**",   key="n8",   use_container_width=True): btn_click("8")
+with c[2]:
+    if st.button("**9**",   key="n9",   use_container_width=True): btn_click("9")
+with c[3]:
+    if st.button("**×**",   key="mul",  use_container_width=True): btn_click("*")
 
-        .buttons {{
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }}
+# ── Row 4 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**4**",   key="n4",   use_container_width=True): btn_click("4")
+with c[1]:
+    if st.button("**5**",   key="n5",   use_container_width=True): btn_click("5")
+with c[2]:
+    if st.button("**6**",   key="n6",   use_container_width=True): btn_click("6")
+with c[3]:
+    if st.button("**−**",   key="sub",  use_container_width=True): btn_click("-")
 
-        button {{
-            height: 72px;
-            border: none;
-            border-radius: 16px;
-            font-size: 22px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            background: #3a3a3c;
-            color: #fff;
-        }}
+# ── Row 5 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**1**",   key="n1",   use_container_width=True): btn_click("1")
+with c[1]:
+    if st.button("**2**",   key="n2",   use_container_width=True): btn_click("2")
+with c[2]:
+    if st.button("**3**",   key="n3",   use_container_width=True): btn_click("3")
+with c[3]:
+    if st.button("**+**",   key="add",  use_container_width=True): btn_click("+")
 
-        button:hover  {{ filter: brightness(1.25); }}
-        button:active {{ transform: scale(0.93); }}
-
-        .btn-special {{ background: #636366; font-size: 18px; }}
-        .btn-operator {{ background: #FF9F0A; }}
-        .btn-equals   {{ background: #0A84FF; }}
-    </style>
-    </head>
-    <body>
-    <div class="calculator">
-
-        <div class="display">
-            <div class="history">{st.session_state.history}&nbsp;</div>
-            <div class="result">{st.session_state.display}</div>
-        </div>
-
-        <div class="buttons">
-            <!-- Row 1 -->
-            <button class="btn-special" onclick="sendVal('%')">%</button>
-            <button class="btn-special" onclick="sendVal('CE')">CE</button>
-            <button class="btn-special" onclick="sendVal('C')">C</button>
-            <button class="btn-special" onclick="sendVal('⌫')">⌫</button>
-
-            <!-- Row 2 -->
-            <button class="btn-special" onclick="sendVal('1/x')">1/x</button>
-            <button class="btn-special" onclick="sendVal('x²')">x²</button>
-            <button class="btn-special" onclick="sendVal('√x')">√x</button>
-            <button class="btn-operator" onclick="sendVal('/')">÷</button>
-
-            <!-- Row 3 -->
-            <button onclick="sendVal('7')">7</button>
-            <button onclick="sendVal('8')">8</button>
-            <button onclick="sendVal('9')">9</button>
-            <button class="btn-operator" onclick="sendVal('*')">×</button>
-
-            <!-- Row 4 -->
-            <button onclick="sendVal('4')">4</button>
-            <button onclick="sendVal('5')">5</button>
-            <button onclick="sendVal('6')">6</button>
-            <button class="btn-operator" onclick="sendVal('-')">−</button>
-
-            <!-- Row 5 -->
-            <button onclick="sendVal('1')">1</button>
-            <button onclick="sendVal('2')">2</button>
-            <button onclick="sendVal('3')">3</button>
-            <button class="btn-operator" onclick="sendVal('+')">+</button>
-
-            <!-- Row 6 -->
-            <button class="btn-special" onclick="sendVal('+/-')">+/-</button>
-            <button onclick="sendVal('0')">0</button>
-            <button onclick="sendVal('.')">.</button>
-            <button class="btn-equals" onclick="sendVal('=')">=</button>
-        </div>
-    </div>
-
-    <script>
-        function sendVal(val) {{
-            window.parent.postMessage({{type: 'streamlit:setComponentValue', value: val}}, '*');
-        }}
-    </script>
-    </body>
-    </html>
-    """,
-    height=600,
-)
-
-# Process button click from HTML
-if result is not None:
-    btn_click(result)
-    st.rerun()
+# ── Row 6 ──────────────────────────────────────────────────
+c = st.columns(4, gap="small")
+with c[0]:
+    if st.button("**+/-**", key="neg",  use_container_width=True): btn_click("NEG")
+with c[1]:
+    if st.button("**0**",   key="n0",   use_container_width=True): btn_click("0")
+with c[2]:
+    if st.button("**.**",   key="dot",  use_container_width=True): btn_click(".")
+with c[3]:
+    if st.button("**=**",   key="eq",   use_container_width=True): btn_click("=")
