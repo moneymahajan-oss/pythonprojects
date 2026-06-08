@@ -6,101 +6,6 @@ st.set_page_config(
     layout="centered"
 )
 
-st.markdown("""
-<style>
-/* Hide Streamlit UI */
-#MainMenu, footer, header {visibility: hidden;}
-.block-container {
-    max-width: 420px;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-/* Background */
-.stApp { background-color: #1c1c1e; }
-
-/* Display */
-.calc-display {
-    background: #2c2c2e;
-    border-radius: 16px;
-    padding: 24px 20px 16px 20px;
-    text-align: right;
-    margin-bottom: 16px;
-    min-height: 110px;
-}
-.calc-history {
-    color: #888;
-    font-size: 15px;
-    min-height: 22px;
-    margin-bottom: 4px;
-}
-.calc-result {
-    color: #ffffff;
-    font-size: 52px;
-    font-weight: 700;
-    word-break: break-all;
-    line-height: 1.1;
-}
-
-/* All buttons base */
-div.stButton > button {
-    width: 100% !important;
-    height: 70px !important;
-    font-size: 22px !important;
-    font-weight: 600 !important;
-    border-radius: 14px !important;
-    border: none !important;
-    background-color: #3a3a3c !important;
-    color: #ffffff !important;
-    transition: all 0.15s ease !important;
-    margin: 2px 0 !important;
-}
-div.stButton > button:hover {
-    background-color: #545458 !important;
-    color: #ffffff !important;
-}
-div.stButton > button:active {
-    transform: scale(0.95) !important;
-}
-
-/* Operator buttons - Orange */
-.op div.stButton > button {
-    background-color: #FF9F0A !important;
-    color: #ffffff !important;
-}
-.op div.stButton > button:hover {
-    background-color: #FFB340 !important;
-    color: #ffffff !important;
-}
-
-/* Equals button - Blue */
-.eq div.stButton > button {
-    background-color: #0A84FF !important;
-    color: #ffffff !important;
-}
-.eq div.stButton > button:hover {
-    background-color: #409CFF !important;
-    color: #ffffff !important;
-}
-
-/* Special top row - Dark Gray */
-.sp div.stButton > button {
-    background-color: #636366 !important;
-    color: #ffffff !important;
-    font-size: 18px !important;
-}
-.sp div.stButton > button:hover {
-    background-color: #7c7c80 !important;
-    color: #ffffff !important;
-}
-
-/* Remove gap between columns */
-[data-testid="column"] {
-    padding: 3px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ── Session State ──────────────────────────────────────────
 for key, val in [("expression", ""), ("display", "0"), ("history", "")]:
     if key not in st.session_state:
@@ -112,8 +17,8 @@ def btn_click(value):
 
     if value == "C":
         st.session_state.expression = ""
-        st.session_state.display   = "0"
-        st.session_state.history   = ""
+        st.session_state.display    = "0"
+        st.session_state.history    = ""
 
     elif value == "CE":
         st.session_state.expression = ""
@@ -126,7 +31,7 @@ def btn_click(value):
 
     elif value == "=":
         try:
-            st.session_state.history    = expr + "  ="
+            st.session_state.history    = expr + " ="
             result = eval(expr)
             if isinstance(result, float) and result.is_integer():
                 result = int(result)
@@ -147,7 +52,7 @@ def btn_click(value):
             st.session_state.display    = str(result)
             st.session_state.expression = str(result)
         except:
-            st.session_state.display = "Error"
+            st.session_state.display    = "Error"
             st.session_state.expression = ""
 
     elif value == "1/x":
@@ -208,62 +113,148 @@ def btn_click(value):
         st.session_state.expression = new
         st.session_state.display    = new
 
-# ── Display ────────────────────────────────────────────────
-st.markdown(f"""
-<div class="calc-display">
-    <div class="calc-history">{st.session_state.history}&nbsp;</div>
-    <div class="calc-result">{st.session_state.display}</div>
-</div>
-""", unsafe_allow_html=True)
 
-# ── Helper to render button with style class ───────────────
-def render(col, label, key, style="", click_val=None):
-    with col:
-        if style:
-            st.markdown(f'<div class="{style}">', unsafe_allow_html=True)
-        if st.button(label, key=key):
-            btn_click(click_val or label)
-        if style:
-            st.markdown('</div>', unsafe_allow_html=True)
+# ── Full UI using HTML Component ───────────────────────────
+import streamlit.components.v1 as components
 
-# ── Row 1 — Special Functions ──────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "%",  "pct",  "sp", "%")
-render(c[1], "CE", "ce",   "sp", "CE")
-render(c[2], "C",  "cl",   "sp", "C")
-render(c[3], "⌫",  "back", "sp", "⌫")
+result = components.html(
+    f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 
-# ── Row 2 — Scientific ─────────────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "1/x", "inv",  "sp",  "1/x")
-render(c[1], "x²",  "sq",   "sp",  "x²")
-render(c[2], "√x",  "sqrt", "sp",  "√x")
-render(c[3], "÷",   "div",  "op",  "/")
+        body {{
+            background: #1c1c1e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }}
 
-# ── Row 3 — 7 8 9 × ───────────────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "7", "n7", "", "7")
-render(c[1], "8", "n8", "", "8")
-render(c[2], "9", "n9", "", "9")
-render(c[3], "×", "mul", "op", "*")
+        .calculator {{
+            background: #1c1c1e;
+            border-radius: 24px;
+            padding: 20px;
+            width: 360px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }}
 
-# ── Row 4 — 4 5 6 − ───────────────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "4", "n4", "", "4")
-render(c[1], "5", "n5", "", "5")
-render(c[2], "6", "n6", "", "6")
-render(c[3], "−", "sub", "op", "-")
+        .display {{
+            background: #2c2c2e;
+            border-radius: 16px;
+            padding: 20px 18px 14px;
+            text-align: right;
+            margin-bottom: 16px;
+            min-height: 110px;
+        }}
 
-# ── Row 5 — 1 2 3 + ───────────────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "1", "n1", "", "1")
-render(c[1], "2", "n2", "", "2")
-render(c[2], "3", "n3", "", "3")
-render(c[3], "+", "add", "op", "+")
+        .history {{
+            color: #888;
+            font-size: 14px;
+            min-height: 20px;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }}
 
-# ── Row 6 — +/- 0 . = ─────────────────────────────────────
-c = st.columns(4, gap="small")
-render(c[0], "+/-", "neg", "sp",  "+/-")
-render(c[1], "0",   "n0",  "",    "0")
-render(c[2], ".",   "dot", "",    ".")
-render(c[3], "=",   "eq",  "eq",  "=")
+        .result {{
+            color: #fff;
+            font-size: 50px;
+            font-weight: 700;
+            word-break: break-all;
+            line-height: 1.1;
+        }}
+
+        .buttons {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }}
+
+        button {{
+            height: 72px;
+            border: none;
+            border-radius: 16px;
+            font-size: 22px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: #3a3a3c;
+            color: #fff;
+        }}
+
+        button:hover  {{ filter: brightness(1.25); }}
+        button:active {{ transform: scale(0.93); }}
+
+        .btn-special {{ background: #636366; font-size: 18px; }}
+        .btn-operator {{ background: #FF9F0A; }}
+        .btn-equals   {{ background: #0A84FF; }}
+    </style>
+    </head>
+    <body>
+    <div class="calculator">
+
+        <div class="display">
+            <div class="history">{st.session_state.history}&nbsp;</div>
+            <div class="result">{st.session_state.display}</div>
+        </div>
+
+        <div class="buttons">
+            <!-- Row 1 -->
+            <button class="btn-special" onclick="sendVal('%')">%</button>
+            <button class="btn-special" onclick="sendVal('CE')">CE</button>
+            <button class="btn-special" onclick="sendVal('C')">C</button>
+            <button class="btn-special" onclick="sendVal('⌫')">⌫</button>
+
+            <!-- Row 2 -->
+            <button class="btn-special" onclick="sendVal('1/x')">1/x</button>
+            <button class="btn-special" onclick="sendVal('x²')">x²</button>
+            <button class="btn-special" onclick="sendVal('√x')">√x</button>
+            <button class="btn-operator" onclick="sendVal('/')">÷</button>
+
+            <!-- Row 3 -->
+            <button onclick="sendVal('7')">7</button>
+            <button onclick="sendVal('8')">8</button>
+            <button onclick="sendVal('9')">9</button>
+            <button class="btn-operator" onclick="sendVal('*')">×</button>
+
+            <!-- Row 4 -->
+            <button onclick="sendVal('4')">4</button>
+            <button onclick="sendVal('5')">5</button>
+            <button onclick="sendVal('6')">6</button>
+            <button class="btn-operator" onclick="sendVal('-')">−</button>
+
+            <!-- Row 5 -->
+            <button onclick="sendVal('1')">1</button>
+            <button onclick="sendVal('2')">2</button>
+            <button onclick="sendVal('3')">3</button>
+            <button class="btn-operator" onclick="sendVal('+')">+</button>
+
+            <!-- Row 6 -->
+            <button class="btn-special" onclick="sendVal('+/-')">+/-</button>
+            <button onclick="sendVal('0')">0</button>
+            <button onclick="sendVal('.')">.</button>
+            <button class="btn-equals" onclick="sendVal('=')">=</button>
+        </div>
+    </div>
+
+    <script>
+        function sendVal(val) {{
+            window.parent.postMessage({{type: 'streamlit:setComponentValue', value: val}}, '*');
+        }}
+    </script>
+    </body>
+    </html>
+    """,
+    height=600,
+)
+
+# Process button click from HTML
+if result is not None:
+    btn_click(result)
+    st.rerun()
