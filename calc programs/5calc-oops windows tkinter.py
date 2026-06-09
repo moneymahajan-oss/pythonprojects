@@ -138,5 +138,7 @@ class CalculatorApp:
 
 # ── Launch App ─────────────────────────────
 root = tk.Tk()
+root.geometry("600x600")    # add this line — width x height
+root.resizable(True, True)   # add this line — allows resizing
 app  = CalculatorApp(root)
 root.mainloop()
