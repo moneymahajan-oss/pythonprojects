@@ -20,14 +20,14 @@ class CalculatorApp:
         tk.Label(
             root, textvariable=self.history_var,
             font=("Arial", 12), bg="#2c2c2e", fg="#888888",
-            anchor="e", width=28
+            anchor="e", width=24
         ).grid(row=0, column=0, columnspan=4,
                padx=10, pady=(10,0), sticky="ew")
 
         tk.Label(
             root, textvariable=self.display_var,
-            font=("Arial", 32, "bold"), bg="#2c2c2e", fg="white",
-            anchor="e", width=28
+            font=("Arial", 28, "bold"), bg="#2c2c2e", fg="white",
+            anchor="e", width=24
         ).grid(row=1, column=0, columnspan=4,
                padx=10, pady=(0,10), sticky="ew")
 
@@ -52,13 +52,13 @@ class CalculatorApp:
             bg, fg = colors[style]
             row = (i // 4) + 2
             col = i % 4
-            tk.Button(
+            btn = tk.Button(
                 root,
                 text    = label,
-                font    = ("Arial", 18, "bold"),
+                font    = ("Arial", 16, "bold"),
                 bg      = bg,
                 fg      = fg,
-                width   = 4,
+                width   = 5,
                 height  = 2,
                 bd      = 0,
                 relief  = "flat",
@@ -66,7 +66,14 @@ class CalculatorApp:
                 activebackground = bg,
                 activeforeground = fg,
                 command = lambda l=label: self.btn_click(l)
-            ).grid(row=row, column=col, padx=4, pady=4)
+            )
+            btn.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
+
+        # Make all columns and rows expand equally
+        for c in range(4):
+            root.columnconfigure(c, weight=1)
+        for r in range(2, 8):
+            root.rowconfigure(r, weight=1)
 
     # ── Button Logic ───────────────────────
     def btn_click(self, value):
@@ -91,7 +98,7 @@ class CalculatorApp:
                 self.display_var.set(str(result))
                 self.expression = str(result)
             except ZeroDivisionError:
-                self.display_var.set("Can't ÷ by 0")
+                self.display_var.set("Can't divide by 0")
                 self.expression = ""
             except:
                 self.display_var.set("Error")
@@ -101,32 +108,37 @@ class CalculatorApp:
                 result = eval(expr) / 100
                 self.display_var.set(str(result))
                 self.expression = str(result)
-            except: pass
+            except:
+                pass
         elif value == "1/x":
             try:
                 result = 1 / eval(expr)
                 self.display_var.set(str(round(result, 10)))
                 self.expression = str(result)
-            except: pass
+            except:
+                pass
         elif value == "x²":
             try:
                 result = eval(expr) ** 2
                 self.display_var.set(str(result))
                 self.expression = str(result)
-            except: pass
+            except:
+                pass
         elif value == "√x":
             try:
                 num = eval(expr)
                 result = num ** 0.5
                 self.display_var.set(str(result))
                 self.expression = str(result)
-            except: pass
+            except:
+                pass
         elif value == "+/-":
             try:
                 result = eval(expr) * -1
                 self.display_var.set(str(result))
                 self.expression = str(result)
-            except: pass
+            except:
+                pass
         elif value in ["÷", "×", "−", "+"]:
             symbol_map = {"÷": "/", "×": "*", "−": "-", "+": "+"}
             self.expression += symbol_map[value]
@@ -138,7 +150,7 @@ class CalculatorApp:
 
 # ── Launch App ─────────────────────────────
 root = tk.Tk()
-root.geometry("600x600")    # add this line — width x height
-root.resizable(True, True)   # add this line — allows resizing
+root.geometry("380x550")
+root.resizable(False, False)
 app  = CalculatorApp(root)
 root.mainloop()

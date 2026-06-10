@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#1c1c1e;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    font-family:Arial,sans-serif;
+  }
+  .calculator {
+    background:#1c1c1e;
+    border-radius:20px;
+    padding:16px;
+    width:340px;
+  }
+  .display {
+    background:#2c2c2e;
+    border-radius:16px;
+    padding:16px 20px 12px;
+    margin-bottom:12px;
+    text-align:right;
+  }
+  .history {
+    color:#888;
+    font-size:14px;
+    min-height:20px;
+    margin-bottom:4px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .display-num {
+    color:white;
+    font-size:48px;
+    font-weight:bold;
+    line-height:1.1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    transition:font-size 0.1s;
+  }
+  .btn-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+  }
+  button {
+    height:72px;
+    border:none;
+    border-radius:14px;
+    font-size:20px;
+    font-weight:bold;
+    color:white;
+    cursor:pointer;
+    transition:filter 0.08s, transform 0.08s;
+    outline:none;
+  }
+  button:hover  { filter:brightness(1.25); }
+  button:active { filter:brightness(1.5); transform:scale(0.95); }
+  .nm { background:#3a3a3c; }
+  .sp { background:#636366; }
+  .op { background:#FF9F0A; }
+  .eq { background:#0A84FF; }
+  .error { color:#ff6b6b !important; }
+</style>
+</head>
+<body>
+<div class="calculator">
+  <div class="display">
+    <div class="history"  id="history"></div>
+    <div class="display-num" id="display">0</div>
+  </div>
+  <div class="btn-grid">
+    <button class="sp" onclick="btn('%')">%</button>
+    <button class="sp" onclick="btn('CE')">CE</button>
+    <button class="sp" onclick="btn('C')">C</button>
+    <button class="sp" onclick="btn('back')">⌫</button>
+
+    <button class="sp" onclick="btn('1/x')">1/x</button>
+    <button class="sp" onclick="btn('x2')">x²</button>
+    <button class="sp" onclick="btn('sqrt')">√x</button>
+    <button class="op" onclick="btn('/')" >÷</button>
+
+    <button class="nm" onclick="btn('7')">7</button>
+    <button class="nm" onclick="btn('8')">8</button>
+    <button class="nm" onclick="btn('9')">9</button>
+    <button class="op" onclick="btn('*')">×</button>
+
+    <button class="nm" onclick="btn('4')">4</button>
+    <button class="nm" onclick="btn('5')">5</button>
+    <button class="nm" onclick="btn('6')">6</button>
+    <button class="op" onclick="btn('-')">−</button>
+
+    <button class="nm" onclick="btn('1')">1</button>
+    <button class="nm" onclick="btn('2')">2</button>
+    <button class="nm" onclick="btn('3')">3</button>
+    <button class="op" onclick="btn('+')">+</button>
+
+    <button class="sp" onclick="btn('neg')">+/-</button>
+    <button class="nm" onclick="btn('0')">0</button>
+    <button class="nm" onclick="btn('.')">.</button>
+    <button class="eq" onclick="btn('=')">=</button>
+  </div>
+</div>
+
+<script>
+  let expr = "";
+  const disp = document.getElementById("display");
+  const hist = document.getElementById("history");
+
+  function setDisplay(val, isError=false) {
+    const s = String(val);
+    disp.textContent = s;
+    disp.style.fontSize = s.length > 14 ? "22px" : s.length > 10 ? "32px" : "48px";
+    disp.className = "display-num" + (isError ? " error" : "");
+  }
+
+  async function callPython(action, expression) {
+    const res = await fetch("/calculate", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({action, expr: expression})
+    });
+    return await res.json();
+  }
+
+  async function btn(v) {
+    if (v === "C") {
+      expr = ""; setDisplay("0"); hist.textContent = "";
+
+    } else if (v === "CE") {
+      expr = ""; setDisplay("0");
+
+    } else if (v === "back") {
+      expr = expr.slice(0,-1); setDisplay(expr || "0");
+
+    } else if (v === "=") {
+      if (!expr) return;
+      hist.textContent = expr + " =";
+      const r = await callPython("eval", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (v === "%") {
+      if (!expr) return;
+      const r = await callPython("percent", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (v === "1/x") {
+      if (!expr) return;
+      const r = await callPython("reciprocal", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (v === "x2") {
+      if (!expr) return;
+      const r = await callPython("square", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (v === "sqrt") {
+      if (!expr) return;
+      const r = await callPython("sqrt", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (v === "neg") {
+      if (!expr) return;
+      const r = await callPython("negate", expr);
+      setDisplay(r.result, r.error);
+      expr = r.error ? "" : r.result;
+
+    } else if (["+","-","*","/"].includes(v)) {
+      if (!expr) return;
+      if (["+","-","*","/"].includes(expr.slice(-1))) expr = expr.slice(0,-1);
+      expr += v;
+      setDisplay(expr);
+
+    } else {
+      if (v === "." && expr.split(/[+\-*/]/).pop().includes(".")) return;
+      expr += v;
+      setDisplay(expr);
+    }
+  }
+
+  // Keyboard support
+  document.addEventListener("keydown", e => {
+    const map = {
+      "0":"0","1":"1","2":"2","3":"3","4":"4",
+      "5":"5","6":"6","7":"7","8":"8","9":"9",
+      ".":".","+":"+","-":"-","*":"*","/":"/",
+      "Enter":"=","=":"=","Backspace":"back","Escape":"C","%":"%"
+    };
+    if (map[e.key]) { e.preventDefault(); btn(map[e.key]); }
+  });
+</script>
+</body>
+</html>
